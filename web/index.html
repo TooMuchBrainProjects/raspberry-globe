@@ -1,0 +1,59 @@
+<head>
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
+
+  <script src="https://unpkg.com/globe.gl"></script>
+  <!--<script src="../../dist/globe.gl.js"></script>-->
+</head>
+
+<body>
+  <div id="globeViz"></div>
+  <button
+    style="position: absolute; bottom: 0; right: 0"
+    onclick="nextHandler()"
+  >
+    Next
+  </button>
+
+  <script>
+    // Gen random data
+    const N = 20;
+    const arcsData = [...Array(N).keys()].map(() => ({
+      startLat: (Math.random() - 0.5) * 180,
+      startLng: (Math.random() - 0.5) * 360,
+      endLat: (Math.random() - 0.5) * 180,
+      endLng: (Math.random() - 0.5) * 360,
+      color: [
+        ["red", "white", "blue", "green"][Math.round(Math.random() * 3)],
+        ["red", "white", "blue", "green"][Math.round(Math.random() * 3)],
+      ],
+    }));
+
+    let g = Globe()
+      .globeImageUrl(
+        // "https://unpkg.com/three-globe/example/img/earth-night.jpg"
+        "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+        // "https://unpkg.com/three-globe/example/img/earth-day.jpg"
+      )
+      .backgroundColor("#abede4")
+      .arcsData(arcsData)
+      .arcColor("color")
+      .arcDashLength(() => Math.random())
+      .arcDashGap(() => Math.random())
+      .arcDashAnimateTime(() => Math.random() * 4000 + 500)(
+      document.getElementById("globeViz")
+    );
+    g.pointOfView({ lat: 42, lng: 0, altitude: 1 }, 1000);
+
+    function nextHandler() {
+      console.log("test");
+      let lat = Math.random() * 180 - 90;
+      let lon = Math.random() * 360 - 180;
+
+      g.pointOfView({ lat: lat, lng: lon, altitude: 1 }, 1000);
+    }
+  </script>
+</body>
