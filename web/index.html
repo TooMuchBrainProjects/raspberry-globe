@@ -6,8 +6,7 @@
         }
     </style>
 
-    <script src="https://unpkg.com/globe.gl"></script>
-    <!--<script src="../../dist/globe.gl.js"></script>-->
+    <script src="./globe.gl.min.js"></script>
 </head>
 
 <body>
@@ -15,35 +14,125 @@
     <button style="position: absolute; bottom: 0; right: 0" onclick="nextHandler()">Next</button>
 
     <script>
-        // Gen random data
-        const N = 20;
-        const arcsData = [...Array(N).keys()].map(() => ({
-            startLat: (Math.random() - 0.5) * 180,
-            startLng: (Math.random() - 0.5) * 360,
-            endLat: (Math.random() - 0.5) * 180,
-            endLng: (Math.random() - 0.5) * 360,
-            color: [
-                ["red", "white", "blue", "green"][Math.round(Math.random() * 3)],
-                ["red", "white", "blue", "green"][Math.round(Math.random() * 3)],
+        const geojson = {
+            type: "FeatureCollection",
+            features: [
+                {
+                    type: "Feature",
+                    properties: {
+                        name: "New York",
+                        latitude: 40.712776,
+                        longitude: -74.005974,
+                    },
+                },
+                {
+                    type: "Feature",
+                    properties: {
+                        name: "Tokyo",
+                        latitude: 35.682839,
+                        longitude: 139.759455,
+                    },
+                },
+                {
+                    type: "Feature",
+                    properties: {
+                        name: "London",
+                        latitude: 51.50853,
+                        longitude: -0.12574,
+                    },
+                },
+                {
+                    type: "Feature",
+                    properties: {
+                        name: "Sydney",
+                        latitude: -33.86682,
+                        longitude: 151.209295,
+                    },
+                },
+                {
+                    type: "Feature",
+                    properties: {
+                        name: "Cairo",
+                        latitude: 30.04996,
+                        longitude: 31.24997,
+                    },
+                },
+                {
+                    type: "Feature",
+                    properties: {
+                        name: "Rio de Janeiro",
+                        latitude: -22.923077,
+                        longitude: -43.226967,
+                    },
+                },
+                {
+                    type: "Feature",
+                    properties: {
+                        name: "Moscow",
+                        latitude: 55.755786,
+                        longitude: 37.617636,
+                    },
+                },
             ],
-        }));
+        };
 
-        let g = Globe()
-            .globeImageUrl(
-                // "https://unpkg.com/three-globe/example/img/earth-night.jpg"
-                // "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-                "https://unpkg.com/three-globe/example/img/earth-day.jpg"
-            )
-            .backgroundColor("#1c1c1c")
-            .arcsData(arcsData)
-            .arcColor("color")
-            .arcDashLength(() => Math.random())
-            .arcDashGap(() => Math.random())
-            .arcStroke(0.8)
-            .arcDashAnimateTime(() => Math.random() * 4000 + 500)(
-            document.getElementById("globeViz")
-        );
-        g.pointOfView({ lat: 42, lng: 0, altitude: 2 }, 1000);
+        function getRandomCity() {
+            return geojson.features[Math.floor(Math.random() * geojson.features.length)];
+        }
+
+        const N = 10;
+        const arcsData = [];
+
+        for (let i = 0; i < N; i++) {
+            const startCity = getRandomCity();
+            let endCity = getRandomCity();
+
+            while (endCity === startCity) {
+                endCity = getRandomCity();
+            }
+
+            arcsData.push({
+                startLat: startCity.properties.latitude,
+                startLng: startCity.properties.longitude,
+                endLat: endCity.properties.latitude,
+                endLng: endCity.properties.longitude,
+                color: [
+                    ["red", "white", "blue", "green"][Math.round(Math.random() * 3)],
+                    ["red", "white", "blue", "green"][Math.round(Math.random() * 3)],
+                ],
+            });
+        }
+
+        let places;
+        let g;
+
+        fetch("./ne_110m_populated_places_simple.geojson")
+            .then((res) => res.json())
+            .then((data) => {
+                places = data;
+
+                g = Globe()
+                    .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-day.jpg")
+                    .backgroundImageUrl("//unpkg.com/three-globe/example/img/night-sky.png")
+                    .labelsData(places.features)
+                    .labelLat((d) => d.properties.latitude)
+                    .labelLng((d) => d.properties.longitude)
+                    .labelText((d) => d.properties.name)
+                    .labelSize((d) => Math.sqrt(d.properties.pop_max) * 4e-4)
+                    .labelDotRadius((d) => Math.sqrt(d.properties.pop_max) * 4e-4)
+                    .labelColor(() => "#fc8803")
+                    .labelResolution(2)
+                    .arcsData(arcsData)
+                    .arcColor("color")
+                    .arcDashLength(() => Math.random())
+                    .arcDashGap(() => Math.random())
+                    .arcStroke(0.8)
+                    .arcDashAnimateTime(() => Math.random() * 4000 + 500)(
+                    document.getElementById("globeViz")
+                );
+
+                g.pointOfView({ lat: 42, lng: 0, altitude: 2 }, 1000);
+            });
 
         function nextHandler() {
             console.log("test");
