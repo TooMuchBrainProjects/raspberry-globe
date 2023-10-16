@@ -11,7 +11,9 @@
 
 <body>
     <div id="globeViz"></div>
-    <button style="position: absolute; bottom: 0; right: 0" onclick="nextHandler()">Next</button>
+    <button style="position: absolute; bottom: 0; right: 0" onclick="nextHandler(Math.random()*7)">
+        Next
+    </button>
 
     <script>
         const geojson = {
@@ -80,7 +82,7 @@
             return geojson.features[Math.floor(Math.random() * geojson.features.length)];
         }
 
-        const N = 10;
+        const N = 15;
         const arcsData = [];
 
         for (let i = 0; i < N; i++) {
@@ -120,7 +122,7 @@
                     .labelText((d) => d.properties.name)
                     .labelSize((d) => Math.sqrt(d.properties.pop_max) * 4e-4)
                     .labelDotRadius((d) => Math.sqrt(d.properties.pop_max) * 4e-4)
-                    .labelColor(() => "#fc8803")
+                    .labelColor(() => "#420400")
                     .labelResolution(2)
                     .arcsData(arcsData)
                     .arcColor("color")
@@ -131,15 +133,23 @@
                     document.getElementById("globeViz")
                 );
 
-                g.pointOfView({ lat: 42, lng: 0, altitude: 2 }, 1000);
+                const city = geojson.features[2];
+                const lat = city.properties.latitude;
+                const lon = city.properties.longitude;
+
+                g.pointOfView({ lat, lng: lon, altitude: 2 }, 1000);
             });
 
-        function nextHandler() {
-            console.log("test");
-            let lat = Math.random() * 180 - 90;
-            let lon = Math.random() * 360 - 180;
+        function nextHandler(cityIndex) {
+            cityIndex = Math.floor(cityIndex);
+            console.log(cityIndex);
+            if (cityIndex >= 0 && cityIndex < geojson.features.length) {
+                const city = geojson.features[cityIndex];
+                const lat = city.properties.latitude;
+                const lon = city.properties.longitude;
 
-            g.pointOfView({ lat: lat, lng: lon, altitude: 2 }, 1000);
+                g.pointOfView({ lat, lng: lon, altitude: 2 }, 1000);
+            }
         }
     </script>
 </body>
