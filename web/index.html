@@ -6,7 +6,7 @@
         }
     </style>
 
-    <script src="./globe.gl.min.js"></script>
+    <script src="./js/globe.gl.min.js"></script>
 </head>
 
 <body>
@@ -108,14 +108,14 @@
         let places;
         let g;
 
-        fetch("./ne_110m_populated_places_simple.geojson")
+        fetch("./data/ne_110m_populated_places_simple.geojson")
             .then((res) => res.json())
             .then((data) => {
                 places = data;
 
                 g = Globe()
-                    .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-day.jpg")
-                    .backgroundImageUrl("//unpkg.com/three-globe/example/img/night-sky.png")
+                    .globeImageUrl("./img/earth-day.jpg")
+                    .backgroundImageUrl("./img/night-sky.png")
                     .labelsData(places.features)
                     .labelLat((d) => d.properties.latitude)
                     .labelLng((d) => d.properties.longitude)
