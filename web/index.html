@@ -11,8 +11,11 @@
 
 <body>
     <div id="globeViz"></div>
-    <button style="position: absolute; bottom: 0; right: 0" onclick="nextHandler(Math.random()*7)">
+    <button style="position: absolute; bottom: 0; right: 0" onclick="nextHandler(getRandom(0, 7))">
         Next
+    </button>
+    <button style="position: absolute; bottom: 0; right: 50" onclick="LondonHandler()">
+        London
     </button>
 
     <script>
@@ -78,8 +81,19 @@
             ],
         };
 
+        let lastRnd = -1;
+
+        function getRandom(lower, upper) {
+            let rnd = Math.floor(Math.random() * (upper - lower) + lower);
+            while (lastRnd == rnd) {
+                rnd = Math.floor(Math.random() * (upper - lower) + lower);
+            }
+            lastRnd = rnd;
+            return rnd;
+        }
+
         function getRandomCity() {
-            return geojson.features[Math.floor(Math.random() * geojson.features.length)];
+            return geojson.features[getRandom(0, geojson.features.length)];
         }
 
         const N = 15;
@@ -142,7 +156,6 @@
 
         function nextHandler(cityIndex) {
             cityIndex = Math.floor(cityIndex);
-            console.log(cityIndex);
             if (cityIndex >= 0 && cityIndex < geojson.features.length) {
                 const city = geojson.features[cityIndex];
                 const lat = city.properties.latitude;
@@ -150,6 +163,10 @@
 
                 g.pointOfView({ lat, lng: lon, altitude: 2 }, 1000);
             }
+        }
+
+        function LondonHandler() {
+            nextHandler(2);
         }
     </script>
 </body>
