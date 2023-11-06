@@ -11,7 +11,10 @@
 
 <body>
     <div id="globeViz"></div>
-    <button style="position: absolute; bottom: 0; right: 0" onclick="nextHandler(getRandom(0, 7))">
+    <button
+        style="position: absolute; bottom: 0; right: 0"
+        onclick="nextHandler(getRandomExcept(0, 7, 2))"
+    >
         Next
     </button>
     <button style="position: absolute; bottom: 0; right: 50" onclick="LondonHandler()">
@@ -94,6 +97,15 @@
 
         function getRandomCity() {
             return geojson.features[getRandom(0, geojson.features.length)];
+        }
+
+        function getRandomExcept(lower, upper, indexExcept) {
+            let rnd = Math.floor(Math.random() * (upper - lower) + lower);
+            while (lastRnd == rnd || rnd == indexExcept) {
+                rnd = Math.floor(Math.random() * (upper - lower) + lower);
+            }
+            lastRnd = rnd;
+            return rnd;
         }
 
         const N = 15;
