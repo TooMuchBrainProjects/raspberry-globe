@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Opendays;
+namespace azure_functions;
 
 public static class WeatherCodeConverter
 {

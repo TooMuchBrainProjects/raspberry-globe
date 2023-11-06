@@ -5,6 +5,7 @@
         <RootNamespace>azure_functions</RootNamespace>
     </PropertyGroup>
     <ItemGroup>
+        <PackageReference Include="Azure.Data.Tables" Version="12.8.1" />
         <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.2.0"/>
     </ItemGroup>
     <ItemGroup>
