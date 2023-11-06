@@ -6,3 +6,4 @@ COPY ./web /usr/share/nginx/html/
 
 # Setze den Port, auf dem der Webserver lauschen soll
 EXPOSE 80
+EXPOSE 443
