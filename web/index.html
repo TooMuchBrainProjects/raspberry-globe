@@ -193,33 +193,73 @@
         //     nextHandler(2);
         // }
 
-        // Azure Function Logic
+        const url = "https://raspberry-globe-1.azurewebsites.net/api/locations";
+        const apiKey = "xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==";
 
-        function fetchData() {
-            const url = "https://raspberry-globe-1.azurewebsites.net/api/current";
-            const apiKey = "xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==";
-
-            fetch(url, {
-                method: "GET",
-                headers: {
-                    "x-functions-key": apiKey,
-                },
+        fetch(url, {
+            method: "GET",
+            headers: {
+                "x-functions-key": apiKey,
+            },
+        })
+            .then((response) => {
+                if (response.ok) {
+                    return response.json(); // Wenn die Antwort in JSON ist
+                } else {
+                    throw new Error("Fehler beim Abrufen der Daten");
+                }
             })
-                .then((response) => {
-                    if (response.ok) {
-                        return response.json(); // Wenn die Antwort in JSON ist
-                    } else {
-                        throw new Error("Fehler beim Abrufen der Daten");
-                    }
-                })
-                .then((data) => {
-                    // Verarbeite die empfangenen Daten hier
-                    console.log(data);
+            .then((data) => {
+                // Verarbeite die empfangenen Daten hier
+                console.log(data);
 
-                    fetch(data.url + "/api/status", {
+                const markerSvg = `<svg viewBox="-4 0 36 36">
+          <path fill="currentColor" d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"></path>
+          <circle fill="black" cx="14" cy="14" r="7"></circle>
+        </svg>`;
+
+                const colors = ["orange", "red", "lightblue", "purple"];
+
+                const gData = data.map((item, index) => {
+                    const [lat, lng] = item.loc.split(",");
+                    const color = colors[index % colors.length];
+
+                    return {
+                        lat: parseFloat(lat),
+                        lng: parseFloat(lng),
+                        size: 50,
+                        color: color,
+                    };
+                });
+
+                console.log(gData);
+
+                g = Globe({ animateIn: false, waitForGlobeReady: false })
+                    .globeImageUrl("./img/earth-day.jpg")
+                    .backgroundImageUrl("./img/night-sky.png")
+                    .htmlElementsData(gData)
+                    .htmlElement((d) => {
+                        const el = document.createElement("div");
+                        el.innerHTML = markerSvg;
+                        el.style.color = d.color;
+                        el.style.width = `${d.size}px`;
+
+                        el.style["pointer-events"] = "auto";
+                        el.style.cursor = "pointer";
+                        el.onclick = () => console.info(d);
+                        return el;
+                    })(document.getElementById("globeViz"));
+
+                // Azure Function Logic
+
+                function fetchData() {
+                    const url = "https://raspberry-globe-1.azurewebsites.net/api/current";
+                    const apiKey = "xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==";
+
+                    fetch(url, {
                         method: "GET",
                         headers: {
-                            "x-functions-key": data.key,
+                            "x-functions-key": apiKey,
                         },
                     })
                         .then((response) => {
@@ -233,63 +273,55 @@
                             // Verarbeite die empfangenen Daten hier
                             console.log(data);
 
-                            let city = data.ipInfo.city;
-
-                            document.getElementById("weather-info__header").innerHTML =
-                                "Current Weather in " + city + ":";
-                            document.getElementById("weather-info__temperature").innerHTML =
-                                "Temperature: " + data.wheaterData.current.temperature_2m + "°C";
-                            document.getElementById("weather-info__description").innerHTML =
-                                "Description: " + data.wheaterData.current.weather_description;
-
-                            let lat = data.ipInfo.loc.split(",")[0];
-                            let lng = data.ipInfo.loc.split(",")[1];
-
-                            const markerSvg = `<svg viewBox="-4 0 36 36">
-          <path fill="currentColor" d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"></path>
-          <circle fill="black" cx="14" cy="14" r="7"></circle>
-        </svg>`;
-
-                            const gData = [
-                                {
-                                    lat: lat,
-                                    lng: lng,
-                                    size: 50,
-                                    color: "orange",
+                            fetch(data.url + "/api/status", {
+                                method: "GET",
+                                headers: {
+                                    "x-functions-key": data.key,
                                 },
-                            ];
+                            })
+                                .then((response) => {
+                                    if (response.ok) {
+                                        return response.json(); // Wenn die Antwort in JSON ist
+                                    } else {
+                                        throw new Error("Fehler beim Abrufen der Daten");
+                                    }
+                                })
+                                .then((data) => {
+                                    // Verarbeite die empfangenen Daten hier
+                                    console.log(data);
 
-                            console.log(gData);
+                                    let city = data.ipInfo.city;
 
-                            g = Globe({ animateIn: false, waitForGlobeReady: false })
-                                .globeImageUrl("./img/earth-day.jpg")
-                                .backgroundImageUrl("./img/night-sky.png")
-                                .htmlElementsData(gData)
-                                .htmlElement((d) => {
-                                    const el = document.createElement("div");
-                                    el.innerHTML = markerSvg;
-                                    el.style.color = d.color;
-                                    el.style.width = `${d.size}px`;
+                                    document.getElementById("weather-info__header").innerHTML =
+                                        "Current Weather in " + city + ":";
+                                    document.getElementById("weather-info__temperature").innerHTML =
+                                        "Temperature: " +
+                                        data.wheaterData.current.temperature_2m +
+                                        "°C";
+                                    document.getElementById("weather-info__description").innerHTML =
+                                        "Description: " +
+                                        data.wheaterData.current.weather_description;
 
-                                    el.style["pointer-events"] = "auto";
-                                    el.style.cursor = "pointer";
-                                    el.onclick = () => console.info(d);
-                                    return el;
-                                })(document.getElementById("globeViz"));
+                                    let lat = data.ipInfo.loc.split(",")[0];
+                                    let lng = data.ipInfo.loc.split(",")[1];
 
-                            g.pointOfView({ lat, lng: lng, altitude: 2 }, 1000);
+                                    g.pointOfView({ lat, lng: lng, altitude: 2 }, 1000);
+                                })
+                                .catch((error) => {
+                                    console.error("Fehler:", error);
+                                });
                         })
                         .catch((error) => {
                             console.error("Fehler:", error);
                         });
-                })
-                .catch((error) => {
-                    console.error("Fehler:", error);
-                });
-        }
+                }
 
-        fetchData();
+                fetchData();
 
-        setInterval(fetchData, 10000);
+                setInterval(fetchData, 10000);
+            })
+            .catch((error) => {
+                console.error("Fehler:", error);
+            });
     </script>
 </body>
