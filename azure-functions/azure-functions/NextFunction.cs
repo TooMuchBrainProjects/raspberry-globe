@@ -36,10 +36,18 @@ public static class NextFunction
         }
 
         Function[] functions = JsonConvert.DeserializeObject<Function[]>(data.Functions);
-        
-        data.Current += 1;
-        if (data.Current >= functions.Length)
-            data.Current = 0;
+
+        Random random = new Random();
+        while(true)
+        {
+            int r = random.Next(0, functions.Length);
+            if (r != data.Current)
+            {
+                data.Current = r;
+                break;
+            }
+            
+        }
         
         Function nextFunc = functions[data.Current]; 
         
