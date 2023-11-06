@@ -17,21 +17,23 @@ public static class Status
     public static async Task<IActionResult> RunAsync(
         [HttpTrigger(AuthorizationLevel.Function, "get" , Route = "status")] HttpRequest req, ILogger log)
     {
+        IPInfo ipInfo;
+        try
+        {
+            ipInfo = await IPInfo.GetIpInfo();
+        }
+        catch
+        {
+            return new InternalServerErrorResult();
+        }
+
         HttpClient client = new HttpClient();
-        
-        string ipInfoapiUrl = "https://ipinfo.io";
-        HttpResponseMessage response = await client.GetAsync(ipInfoapiUrl);
+        string[] splitted_gps = ipInfo.Loc.Split(',');
+        string wheaterApiUrl= $"https://api.open-meteo.com/v1/forecast?latitude={splitted_gps[0]}&longitude={splitted_gps[1]}&timezone={ipInfo.Timezone}&&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,rain,showers,snowfall,weather_code,cloud_cover,wind_speed_10m";
+        HttpResponseMessage response = await client.GetAsync(wheaterApiUrl);
         if (!response.IsSuccessStatusCode)
             return new InternalServerErrorResult();
         string responseBody = await response.Content.ReadAsStringAsync();
-        IPInfo ipInfo = JsonConvert.DeserializeObject<IPInfo>(responseBody);
-
-        string[] splitted_gps = ipInfo.Loc.Split(',');
-        string wheaterApiUrl= $"https://api.open-meteo.com/v1/forecast?latitude={splitted_gps[0]}&longitude={splitted_gps[1]}&timezone={ipInfo.Timezone}&&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,rain,showers,snowfall,weather_code,cloud_cover,wind_speed_10m";
-        response = await client.GetAsync(wheaterApiUrl);
-        if (!response.IsSuccessStatusCode)
-            return new InternalServerErrorResult();
-        responseBody = await response.Content.ReadAsStringAsync();
         ForecastData wheaterData= JsonConvert.DeserializeObject<ForecastData>(responseBody);
 
         req.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
@@ -40,17 +42,6 @@ public static class Status
     }
 }
 
-public struct IPInfo
-{
-    public string IP { get; set; }
-    public string City { get; set; }
-    public string Region { get; set; }
-    public string Country { get; set; }
-    public string Loc { get; set; }
-    public string Org { get; set; }
-    public string Postal { get; set; }
-    public string Timezone { get; set; }
-}
 
 public struct ForecastData
 {

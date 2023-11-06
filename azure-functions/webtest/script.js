@@ -1,8 +1,15 @@
-const apiUrl = 'http://localhost:7071/api/status';
+const apiUrl = 'https://raspberry-globe-1.azurewebsites.net/api/status';
+const apiKey = 'xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==';
+
 
 async function fetchData() {
     try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(
+            apiUrl,
+            headers: {
+                'x-functions-key': apiKey,
+            }
+        );
         const data = await response.json();
 
         document.getElementById('ip').textContent = data.ipInfo.ip;
