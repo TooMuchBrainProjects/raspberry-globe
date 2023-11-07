@@ -1,0 +1,6 @@
+services:
+    globe:
+        image: trueberryless/globe
+        container_name: globe
+        ports:
+            - "80:80"

@@ -1,8 +1,15 @@
 <head>
+    <meta charset="utf-8" />
     <style>
         body {
             margin: 0;
             overflow: hidden;
+        }
+
+        #weather-info {
+            background: white;
+            padding: 20px;
+            font-family: sans-serif;
         }
     </style>
 
@@ -11,174 +18,143 @@
 
 <body>
     <div id="globeViz"></div>
-    <button
-        style="position: absolute; bottom: 0; right: 0"
-        onclick="nextHandler(getRandomExcept(0, 7, 2))"
-    >
-        Next
-    </button>
-    <button style="position: absolute; bottom: 0; right: 50" onclick="LondonHandler()">
-        London
-    </button>
+
+    <div id="weather-info" style="position: absolute; bottom: 0; right: 0">
+        <h3 id="weather-info__header"></h3>
+        <pre id="weather-info__temperature"></pre>
+        <pre id="weather-info__description"></pre>
+    </div>
 
     <script>
-        const geojson = {
-            type: "FeatureCollection",
-            features: [
-                {
-                    type: "Feature",
-                    properties: {
-                        name: "New York",
-                        latitude: 40.712776,
-                        longitude: -74.005974,
-                    },
-                },
-                {
-                    type: "Feature",
-                    properties: {
-                        name: "Tokyo",
-                        latitude: 35.682839,
-                        longitude: 139.759455,
-                    },
-                },
-                {
-                    type: "Feature",
-                    properties: {
-                        name: "London",
-                        latitude: 51.50853,
-                        longitude: -0.12574,
-                    },
-                },
-                {
-                    type: "Feature",
-                    properties: {
-                        name: "Sydney",
-                        latitude: -33.86682,
-                        longitude: 151.209295,
-                    },
-                },
-                {
-                    type: "Feature",
-                    properties: {
-                        name: "Cairo",
-                        latitude: 30.04996,
-                        longitude: 31.24997,
-                    },
-                },
-                {
-                    type: "Feature",
-                    properties: {
-                        name: "Rio de Janeiro",
-                        latitude: -22.923077,
-                        longitude: -43.226967,
-                    },
-                },
-                {
-                    type: "Feature",
-                    properties: {
-                        name: "Moscow",
-                        latitude: 55.755786,
-                        longitude: 37.617636,
-                    },
-                },
-            ],
-        };
+        (async () => await main())();
 
-        let lastRnd = -1;
+        async function main() {
+            var g = await init_globe();
+            g = g(document.getElementById("globeViz"));
+            
+            var current = null;
 
-        function getRandom(lower, upper) {
-            let rnd = Math.floor(Math.random() * (upper - lower) + lower);
-            while (lastRnd == rnd) {
-                rnd = Math.floor(Math.random() * (upper - lower) + lower);
-            }
-            lastRnd = rnd;
-            return rnd;
+            setInterval(async () => { current = await poll_current(current, g); }, 1000);
         }
 
-        function getRandomCity() {
-            return geojson.features[getRandom(0, geojson.features.length)];
-        }
+        
+        async function init_globe() {
+            const url = "https://raspberry-globe-1.azurewebsites.net/api/locations";
+            const apiKey = "xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==";
 
-        function getRandomExcept(lower, upper, indexExcept) {
-            let rnd = Math.floor(Math.random() * (upper - lower) + lower);
-            while (lastRnd == rnd || rnd == indexExcept) {
-                rnd = Math.floor(Math.random() * (upper - lower) + lower);
-            }
-            lastRnd = rnd;
-            return rnd;
-        }
-
-        const N = 15;
-        const arcsData = [];
-
-        for (let i = 0; i < N; i++) {
-            const startCity = getRandomCity();
-            let endCity = getRandomCity();
-
-            while (endCity === startCity) {
-                endCity = getRandomCity();
-            }
-
-            arcsData.push({
-                startLat: startCity.properties.latitude,
-                startLng: startCity.properties.longitude,
-                endLat: endCity.properties.latitude,
-                endLng: endCity.properties.longitude,
-                color: [
-                    ["red", "white", "blue", "green"][Math.round(Math.random() * 3)],
-                    ["red", "white", "blue", "green"][Math.round(Math.random() * 3)],
-                ],
-            });
-        }
-
-        let places;
-        let g;
-
-        fetch("./data/ne_110m_populated_places_simple.geojson")
-            .then((res) => res.json())
-            .then((data) => {
-                places = data;
-
-                g = Globe()
-                    .globeImageUrl("./img/earth-day.jpg")
-                    .backgroundImageUrl("./img/night-sky.png")
-                    .labelsData(places.features)
-                    .labelLat((d) => d.properties.latitude)
-                    .labelLng((d) => d.properties.longitude)
-                    .labelText((d) => d.properties.name)
-                    .labelSize((d) => Math.sqrt(d.properties.pop_max) * 4e-4)
-                    .labelDotRadius((d) => Math.sqrt(d.properties.pop_max) * 4e-4)
-                    .labelColor(() => "#420400")
-                    .labelResolution(2)
-                    .arcsData(arcsData)
-                    .arcColor("color")
-                    .arcDashLength(() => Math.random())
-                    .arcDashGap(() => Math.random())
-                    .arcStroke(0.8)
-                    .arcDashAnimateTime(() => Math.random() * 4000 + 500)(
-                    document.getElementById("globeViz")
-                );
-
-                const city = geojson.features[2];
-                const lat = city.properties.latitude;
-                const lon = city.properties.longitude;
-
-                g.pointOfView({ lat, lng: lon, altitude: 2 }, 1000);
+            let data = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "x-functions-key": apiKey,
+                },
+            })
+            .then((response) => {
+                if (response.ok) {
+                    return response.json(); // Wenn die Antwort in JSON ist
+                } else {
+                    throw new Error("Fehler beim Abrufen der Daten");
+                }
             });
 
-        function nextHandler(cityIndex) {
-            cityIndex = Math.floor(cityIndex);
-            if (cityIndex >= 0 && cityIndex < geojson.features.length) {
-                const city = geojson.features[cityIndex];
-                const lat = city.properties.latitude;
-                const lon = city.properties.longitude;
+            const markerSvg = `<svg viewBox="-4 0 36 36">
+      <path fill="currentColor" d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"></path>
+      <circle fill="black" cx="14" cy="14" r="7"></circle>
+    </svg>`;
 
-                g.pointOfView({ lat, lng: lon, altitude: 2 }, 1000);
-            }
+            const colors = ["orange", "red", "lightblue", "purple"];
+
+            const gData = data.map((item, index) => {
+                const [lat, lng] = item.loc.split(",");
+                const color = colors[index % colors.length];
+
+                return {
+                    lat: parseFloat(lat),
+                    lng: parseFloat(lng),
+                    size: 50,
+                    color: color,
+                };
+            });
+
+            return Globe({ animateIn: false, waitForGlobeReady: false })
+                .globeImageUrl("./img/earth-day.jpg")
+                .backgroundImageUrl("./img/night-sky.png")
+                .htmlElementsData(gData)
+                .htmlElement((d) => {
+                    const el = document.createElement("div");
+                    el.innerHTML = markerSvg;
+                    el.style.color = d.color;
+                    el.style.width = `${d.size}px`;
+
+                    el.style["pointer-events"] = "auto";
+                    el.style.cursor = "pointer";
+                    el.onclick = () => console.info(d);
+                    return el;
+                });
         }
 
-        function LondonHandler() {
-            nextHandler(2);
+        async function poll_current(current,g) {
+            const url = "https://raspberry-globe-1.azurewebsites.net/api/current";
+            const apiKey = "xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==";
+
+            let data = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "x-functions-key": apiKey,
+                },
+            })
+            .then((response) => {
+                if (response.ok) {
+                    return response.json(); // Wenn die Antwort in JSON ist
+                } else {
+                    throw new Error("Fehler beim Abrufen der Daten");
+                }
+            });
+            // Verarbeite die empfangenen Daten hier
+            console.log(data);
+            
+            if(current != null && current.url == data.url) {
+                return current;                
+            }
+            else {
+                (async () => await fetch_status(data,g))();
+                return data;
+            }
+
+        }
+        
+        async function fetch_status(data,g) {
+            let status = await fetch(data.url + "/api/status", {
+                method: "GET",
+                headers: {
+                    "x-functions-key": data.key,
+                },
+            })
+            .then((response) => {
+                if (response.ok) {
+                    return response.json(); // Wenn die Antwort in JSON ist
+                } else {
+                    throw new Error("Fehler beim Abrufen der Daten");
+                }
+            })
+            // Verarbeite die empfangenen Daten hier
+            console.log(status);
+
+            let city = status.ipInfo.city;
+
+            document.getElementById("weather-info__header").innerHTML =
+                "Current Weather in " + city + ":";
+            document.getElementById("weather-info__temperature").innerHTML =
+                "Temperature: " +
+                status.weather.current.temperature_2m +
+                "°C";
+            document.getElementById("weather-info__description").innerHTML =
+                "Description: " +
+                status.weather.current.weather_description;
+
+            let lat = status.ipInfo.loc.split(",")[0];
+            let lng = status.ipInfo.loc.split(",")[1];
+
+            g.pointOfView({ lat, lng: lng, altitude: 2 }, 1000);
         }
     </script>
 </body>
