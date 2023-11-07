@@ -34,10 +34,10 @@ public static class Status
         if (!response.IsSuccessStatusCode)
             return new InternalServerErrorResult();
         string responseBody = await response.Content.ReadAsStringAsync();
-        ForecastData wheaterData= JsonConvert.DeserializeObject<ForecastData>(responseBody);
+        ForecastData weather = JsonConvert.DeserializeObject<ForecastData>(responseBody);
 
         req.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-        var resp = new { ipInfo, wheaterData };
+        var resp = new { ipInfo, weather };
         return new JsonResult(resp);
     }
 }
