@@ -1,6 +1,8 @@
 use rppal::gpio::{Gpio, Level, Trigger};
 use reqwest::blocking::Client;
 use serde::{Serialize, Deserialize};
+use std::thread::sleep;
+use std::time::Duration;
 
 fn main() {
     let gpio = Gpio::new().unwrap();
@@ -15,12 +17,20 @@ fn main() {
             l1.set_high();
             
             match next(&client) {
-                Ok(body) => println!("{:#?}", body),
-                Err(e) => println!("Error: {:#?}", e) 
+                Ok(body) => {
+                    println!("{:#?}", body);
+                    sleep(Duration::from_secs(1));
+                    l1.set_low();
+                },
+                Err(e) => {
+                    println!("Error: {:#?}", e);
+                    l1.set_low();
+                    sleep(Duration::from_secs(1));
+                    l1.set_high();
+                    sleep(Duration::from_secs(1));
+                    l1.set_low();
+                }
             }
-
-            std::thread::sleep(std::time::Duration::from_secs(1));
-            l1.set_low();
         }
     }
 }
@@ -30,7 +40,8 @@ fn next(client: &Client) -> reqwest::Result<Function> {
     .header("x-functions-key", "xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==")
     .send()?;
 
-    let func = resp.json()?;
+    let mut func : Function = resp.json()?;
+    func.key = String::from("***");
     return Ok(func);
 }
 
