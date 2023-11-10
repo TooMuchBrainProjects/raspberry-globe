@@ -11,6 +11,10 @@
             padding: 20px;
             font-family: sans-serif;
         }
+
+        div[draggable] > svg {
+            transform: translateY(-50%);
+        }
     </style>
 
     <script src="./js/globe.gl.min.js"></script>
@@ -31,13 +35,14 @@
         async function main() {
             var g = await init_globe();
             g = g(document.getElementById("globeViz"));
-            
+
             var current = null;
 
-            setInterval(async () => { current = await poll_current(current, g); }, 1000);
+            setInterval(async () => {
+                current = await poll_current(current, g);
+            }, 1000);
         }
 
-        
         async function init_globe() {
             const url = "https://raspberry-globe-1.azurewebsites.net/api/locations";
             const apiKey = "xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==";
@@ -47,8 +52,7 @@
                 headers: {
                     "x-functions-key": apiKey,
                 },
-            })
-            .then((response) => {
+            }).then((response) => {
                 if (response.ok) {
                     return response.json(); // Wenn die Antwort in JSON ist
                 } else {
@@ -61,7 +65,7 @@
       <circle fill="black" cx="14" cy="14" r="7"></circle>
     </svg>`;
 
-            const colors = ["orange", "red", "lightblue", "purple"];
+            const colors = ["orange", "red", "lightblue", "purple", "white"];
 
             const gData = data.map((item, index) => {
                 const [lat, lng] = item.loc.split(",");
@@ -92,7 +96,7 @@
                 });
         }
 
-        async function poll_current(current,g) {
+        async function poll_current(current, g) {
             const url = "https://raspberry-globe-1.azurewebsites.net/api/current";
             const apiKey = "xi6eyMI1ddu6-RliD-tl7V4aty0EsXbg1E5eYOFwBo9vAzFuL-8RSQ==";
 
@@ -101,8 +105,7 @@
                 headers: {
                     "x-functions-key": apiKey,
                 },
-            })
-            .then((response) => {
+            }).then((response) => {
                 if (response.ok) {
                     return response.json(); // Wenn die Antwort in JSON ist
                 } else {
@@ -111,31 +114,28 @@
             });
             // Verarbeite die empfangenen Daten hier
             console.log(data);
-            
-            if(current != null && current.url == data.url) {
-                return current;                
-            }
-            else {
-                (async () => await fetch_status(data,g))();
+
+            if (current != null && current.url == data.url) {
+                return current;
+            } else {
+                (async () => await fetch_status(data, g))();
                 return data;
             }
-
         }
-        
-        async function fetch_status(data,g) {
+
+        async function fetch_status(data, g) {
             let status = await fetch(data.url + "/api/status", {
                 method: "GET",
                 headers: {
                     "x-functions-key": data.key,
                 },
-            })
-            .then((response) => {
+            }).then((response) => {
                 if (response.ok) {
                     return response.json(); // Wenn die Antwort in JSON ist
                 } else {
                     throw new Error("Fehler beim Abrufen der Daten");
                 }
-            })
+            });
             // Verarbeite die empfangenen Daten hier
             console.log(status);
 
@@ -144,12 +144,9 @@
             document.getElementById("weather-info__header").innerHTML =
                 "Current Weather in " + city + ":";
             document.getElementById("weather-info__temperature").innerHTML =
-                "Temperature: " +
-                status.weather.current.temperature_2m +
-                "°C";
+                "Temperature: " + status.weather.current.temperature_2m + "°C";
             document.getElementById("weather-info__description").innerHTML =
-                "Description: " +
-                status.weather.current.weather_description;
+                "Description: " + status.weather.current.weather_description;
 
             let lat = status.ipInfo.loc.split(",")[0];
             let lng = status.ipInfo.loc.split(",")[1];
